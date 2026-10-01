@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>データベース演習環境</title>
+  <link rel="stylesheet" href="assets/style.css?v=practice-1.0">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="eyebrow">DATABASE EXERCISE</div>
+        <h1 id="siteTitle">データベース演習環境</h1>
+        <p id="siteSubtitle">ブラウザで実行する SQLite 演習環境</p>
+      </div>
+      <div class="status-stack">
+        <span class="badge" id="stageBadge">前半</span>
+        <span class="status" id="status">読み込み中...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <div class="label">DATABASE</div>
+            <h2 id="dbTitle">exercise データベース</h2>
+          </div>
+        </div>
+
+        <label class="field-label" id="dbSelectLabel" for="dbSelect">データベース</label>
+        <select id="dbSelect" class="select"></select>
+
+        <p class="description" id="dbDescription"></p>
+
+        <div class="notice">
+          SQLはこのブラウザ内だけで実行されます。他の学生のデータには影響しません。
+        </div>
+
+        <div class="notes">
+          <div class="notes-title">注意事項</div>
+          <ul>
+            <li>各ブラウザタブのデータベースは独立しています。複数タブ間で変更内容は共有されません。</li>
+            <li>ページを再読み込みするか「初期状態に戻す」を押すと，配布時の状態に戻ります。</li>
+            <li>SELECT はデータベースの内容を変更しません。</li>
+            <li>INSERT・UPDATE・DELETE などの変更は，そのタブ内のデータベースだけに反映されます。</li>
+            <li>第1DBのデータは，過去に公開されたシラバス情報を基にした演習用データです。現在の開講情報を示すものではありません。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <div class="label">RELATIONSHIPS</div>
+            <h2>テーブル間の関係</h2>
+          </div>
+        </div>
+        <div class="diagram-wrap">
+          <img id="diagram" alt="exerciseデータベースのテーブル関係図">
+        </div>
+        <p class="micro">
+          role_id，op_lec，op_wday，op_hour は元データの値をそのまま保持しています。
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="section-heading compact">
+          <div>
+            <div class="label">TABLES</div>
+            <h2>テーブル</h2>
+          </div>
+        </div>
+        <div id="tableList" class="table-list"></div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <section class="card editor-card">
+        <div class="editor-header">
+          <div>
+            <div class="label">SQL EDITOR</div>
+            <h2>SQLを実行</h2>
+          </div>
+</div>
+
+        <div class="toolbar">
+          <select id="exampleSelect" class="select example-select" aria-label="SQL例">
+            <option value="">SQL例を選択...</option>
+          </select>
+
+          <button id="runBtn" class="button primary">▶ 実行</button>
+          <button id="resetBtn" class="button">↺ 初期状態に戻す</button>
+          <button id="saveSqlBtn" class="button">SQLを保存</button>
+        </div>
+
+        <textarea id="sqlEditor" spellcheck="false" aria-label="SQL editor"></textarea>
+
+        <div class="editor-footer">
+          <span>SQLite環境です。標準SQLの基本演習を想定しています。</span>
+          <span id="dirtyIndicator"></span>
+        </div>
+      </section>
+
+      <section class="card result-card">
+        <div class="section-heading result-heading">
+          <div>
+            <div class="label">RESULT</div>
+            <h2>実行結果</h2>
+          </div>
+          <div id="timing"></div>
+        </div>
+        <div id="message" class="message">データベースを読み込んでいます...</div>
+        <div id="result"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <div class="label">SCHEMA</div>
+            <h2>スキーマ</h2>
+          </div>
+        </div>
+        <div id="schema" class="schema-grid"></div>
+      </section>
+</section>
+  </main>
+
+  <footer>
+    Database Exercise SQL Lab · Static browser-based SQLite environment
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+  <script src="assets/app.js?v=practice-1.0"></script>
+</body>
+</html>

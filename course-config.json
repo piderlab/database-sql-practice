@@ -1,0 +1,23 @@
+{
+  "siteTitle": "データベース演習環境",
+  "subtitle": "ブラウザで実行する SQLite 演習環境",
+  "databases": [
+    {
+      "id": "exercise",
+      "title": "exercise データベース",
+      "stage": "第1DB",
+      "file": "databases/exercise.db",
+      "diagram": "images/exercise.png",
+      "description": "講義，教員，講義担当，開講時間情報からなる演習用データベースです。"
+    },
+    {
+      "id": "piza",
+      "title": "piza データベース",
+      "stage": "第2DB",
+      "file": "databases/piza.db",
+      "diagram": "images/piza.png",
+      "description": "ingredient，quantity，tree の3テーブルからなる演習用データベースです。"
+    }
+  ],
+  "version": "practice-1.0"
+}
