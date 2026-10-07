@@ -203,3 +203,87 @@ footer { padding: 8px 28px 34px; text-align: center; color: #7c8791; font-size: 
 .notes li + li {
   margin-top: 4px;
 }
+
+
+/* Code editor ------------------------------------------------------------ */
+.CodeMirror {
+  width: 100%;
+  height: 330px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfd;
+  color: #17212b;
+  font: 15px/1.6 Consolas, "Cascadia Code", "SFMono-Regular", "Courier New", monospace;
+}
+
+.CodeMirror-focused {
+  background: #fff;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.CodeMirror-gutters {
+  background: #f2f4f6;
+  border-right: 1px solid var(--line);
+}
+
+.CodeMirror-linenumber {
+  color: #9aa3ab;
+  padding: 0 7px 0 5px;
+}
+
+.CodeMirror-cursor {
+  border-left-color: #17212b;
+}
+
+.CodeMirror-selected,
+.CodeMirror-focused .CodeMirror-selected {
+  background: #dcebf5;
+}
+
+/* SQL syntax colours: restrained for teaching use. */
+.cm-s-default .cm-keyword {
+  color: #155c8a;
+  font-weight: 700;
+}
+
+.cm-s-default .cm-string {
+  color: #7a4e16;
+}
+
+.cm-s-default .cm-number {
+  color: #7b3f98;
+}
+
+.cm-s-default .cm-comment {
+  color: #78848e;
+  font-style: italic;
+}
+
+.cm-s-default .cm-operator {
+  color: #394956;
+}
+
+.cm-s-default .cm-variable-2,
+.cm-s-default .cm-variable-3 {
+  color: #265f4a;
+}
+
+/* Completion popup */
+.CodeMirror-hints {
+  z-index: 10000;
+  max-height: 260px;
+  border: 1px solid #c7d0d8;
+  border-radius: 7px;
+  box-shadow: 0 8px 24px rgba(20, 31, 43, .15);
+  font: 13px/1.45 Consolas, "Cascadia Code", "SFMono-Regular", monospace;
+}
+
+.CodeMirror-hint {
+  padding: 4px 9px;
+  border-radius: 4px;
+}
+
+li.CodeMirror-hint-active {
+  background: var(--accent);
+  color: white;
+}

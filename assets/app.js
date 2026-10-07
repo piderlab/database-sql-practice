@@ -4,7 +4,10 @@ let config;
 let currentDatabase;
 let lastResults = [];
 let databaseDirty = false;
-const APP_VERSION = "practice-1.0";
+const APP_VERSION = "practice-1.1";
+let sqlEditor = null;
+let sqlHintTables = {};
+let autoHintTimer = null;
 
 const DISPLAY_ROW_LIMIT = 1000;
 const els = {
@@ -84,6 +87,136 @@ ORDER BY id;`
   ]
 };
 
+
+function initialiseSqlEditor() {
+  if (!els.editor) return;
+
+  // CodeMirrorが利用できない場合もtextareaのまま演習できる。
+  if (typeof CodeMirror === "undefined") {
+    console.warn("CodeMirror could not be loaded. Falling back to textarea.");
+    bindTextareaShortcuts();
+    return;
+  }
+
+  sqlEditor = CodeMirror.fromTextArea(els.editor, {
+    mode: "text/x-sql",
+    lineNumbers: true,
+    lineWrapping: true,
+    indentUnit: 2,
+    tabSize: 2,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    smartIndent: true,
+    autofocus: false,
+    extraKeys: {
+      "Ctrl-Enter": () => executeSql(),
+      "Cmd-Enter": () => executeSql(),
+      "Ctrl-Space": cm => showSqlHint(cm),
+      "Cmd-Space": cm => showSqlHint(cm),
+      "Tab": cm => {
+        if (cm.somethingSelected()) {
+          cm.indentSelection("add");
+        } else {
+          cm.replaceSelection("  ", "end");
+        }
+      },
+      "Shift-Tab": cm => cm.indentSelection("subtract")
+    }
+  });
+
+  // 入力候補は控えめに自動表示する。
+  // 英数字・_を2文字以上入力したときだけ候補を出し，
+  // SQL文そのものを自動生成することはしない。
+  sqlEditor.on("inputRead", (cm, change) => {
+    if (!change.text || change.text.length !== 1) return;
+    const typed = change.text[0];
+    if (!/^[A-Za-z0-9_]$/.test(typed)) return;
+    if (cm.state.completionActive) return;
+
+    const cursor = cm.getCursor();
+    const token = cm.getTokenAt(cursor);
+    const currentWord = (token.string || "").trim();
+    if (currentWord.length < 2) return;
+
+    clearTimeout(autoHintTimer);
+    autoHintTimer = setTimeout(() => showSqlHint(cm), 120);
+  });
+}
+
+function bindTextareaShortcuts() {
+  if (!els.editor) return;
+
+  els.editor.addEventListener("keydown", event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      executeSql();
+    }
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const start = els.editor.selectionStart;
+      const end = els.editor.selectionEnd;
+      els.editor.setRangeText("  ", start, end, "end");
+    }
+  });
+}
+
+function getEditorValue() {
+  return sqlEditor ? sqlEditor.getValue() : (els.editor ? els.editor.value : "");
+}
+
+function setEditorValue(value) {
+  const text = value || "";
+  if (sqlEditor) {
+    sqlEditor.setValue(text);
+    sqlEditor.clearHistory();
+  } else if (els.editor) {
+    els.editor.value = text;
+  }
+}
+
+function focusEditor() {
+  if (sqlEditor) {
+    sqlEditor.focus();
+  } else if (els.editor) {
+    els.editor.focus();
+  }
+}
+
+function updateSqlHintSchema() {
+  sqlHintTables = {};
+  if (!db) return;
+
+  getUserTables().forEach(tableName => {
+    try {
+      const info = db.exec(`PRAGMA table_info("${quoteIdent(tableName)}");`);
+      sqlHintTables[tableName] = info.length
+        ? info[0].values.map(row => String(row[1]))
+        : [];
+    } catch (_) {
+      sqlHintTables[tableName] = [];
+    }
+  });
+
+  if (sqlEditor) {
+    sqlEditor.setOption("hintOptions", {
+      tables: sqlHintTables,
+      completeSingle: false
+    });
+  }
+}
+
+function showSqlHint(cm = sqlEditor) {
+  if (!cm || typeof CodeMirror === "undefined") return;
+  if (!CodeMirror.showHint || !CodeMirror.hint || !CodeMirror.hint.sql) return;
+
+  CodeMirror.showHint(cm, CodeMirror.hint.sql, {
+    tables: sqlHintTables,
+    completeSingle: false,
+    alignWithWord: true
+  });
+}
+
 function renderExamples(databaseId) {
   if (!els.examples) return;
 
@@ -110,6 +243,7 @@ function getExample(databaseId, exampleId) {
 
 async function initialise() {
   try {
+    initialiseSqlEditor();
     els.status.textContent = "SQLite準備中...";
 
     if (typeof initSqlJs !== "function") {
@@ -192,7 +326,7 @@ async function loadDatabase(databaseId, setDefaultSql = false) {
   }
 
   // 新しいDBを読み込んだときは、SQLエディタを空にする。
-  els.editor.value = "";
+  setEditorValue("");
 
   els.result.innerHTML = "";
   els.timing.textContent = "";
@@ -203,12 +337,13 @@ async function loadDatabase(databaseId, setDefaultSql = false) {
   els.dirty.textContent = "";
 
   renderSchemaAndTables();
+  updateSqlHintSchema();
 }
 
 function executeSql() {
   if (!db) return;
 
-  const sql = els.editor.value.trim();
+  const sql = getEditorValue().trim();
   if (!sql) {
     els.message.textContent = "SQLを入力してください。";
     return;
@@ -244,6 +379,7 @@ function executeSql() {
       databaseDirty ? "● DBは初期状態から変更されています" : "";
 
     renderSchemaAndTables();
+    updateSqlHintSchema();
   } catch (error) {
     lastResults = [];
     els.result.innerHTML = "";
@@ -367,8 +503,8 @@ function renderSchemaAndTables() {
       `<span class="table-name">${escapeHtml(tableName)}</span>` +
       `<span class="table-count">${count} rows</span>`;
     tableButton.addEventListener("click", () => {
-      els.editor.value = `SELECT *\nFROM ${tableName}\nLIMIT 100;`;
-      els.editor.focus();
+      setEditorValue(`SELECT *\nFROM ${tableName}\nLIMIT 100;`);
+      focusEditor();
       els.message.textContent =
         `${tableName} を参照するSQLをエディタに入力しました。「実行」を押してください。`;
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -430,14 +566,14 @@ async function resetDatabase() {
   if (!ok) return;
 
   await loadDatabase(currentDatabase.id, false);
-  els.editor.value = "";
+  setEditorValue("");
   els.message.textContent = "データベースを初期状態に戻しました。";
 }
 
 function saveSql() {
   const filename = `${currentDatabase ? currentDatabase.id : "exercise"}-answer.sql`;
   downloadBlob(
-    new Blob([els.editor.value], { type: "text/sql;charset=utf-8" }),
+    new Blob([getEditorValue()], { type: "text/sql;charset=utf-8" }),
     filename
   );
 }
@@ -493,27 +629,13 @@ if (els.examples) {
       event.target.value
     );
     if (example) {
-      els.editor.value = example.sql;
-      els.editor.focus();
+      setEditorValue(example.sql);
+      focusEditor();
     }
     event.target.value = "";
   });
 }
 
-if (els.editor) {
-  els.editor.addEventListener("keydown", event => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-      event.preventDefault();
-      executeSql();
-    }
-    if (event.key === "Tab") {
-      event.preventDefault();
-      const start = els.editor.selectionStart;
-      const end = els.editor.selectionEnd;
-      els.editor.setRangeText("  ", start, end, "end");
-    }
-  });
-}
 
 console.info(`Database Exercise SQL Lab ${APP_VERSION}`);
 initialise();
