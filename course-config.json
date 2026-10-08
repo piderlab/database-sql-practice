@@ -17,7 +17,14 @@
       "file": "databases/piza.db",
       "diagram": "images/piza.png",
       "description": "ingredient，quantity，tree の3テーブルからなる演習用データベースです。"
+    },
+    {
+      "id": "sandbox",
+      "title": "sandbox データベース",
+      "stage": "第3DB",
+      "file": "databases/sandbox.db",
+      "description": "INSERT・UPDATE・DELETEなどを自由に試すための軽量な演習用データベースです。"
     }
   ],
-  "version": "practice-1.1"
+  "version": "practice-1.2"
 }

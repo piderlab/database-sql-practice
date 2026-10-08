@@ -4,7 +4,7 @@ let config;
 let currentDatabase;
 let lastResults = [];
 let databaseDirty = false;
-const APP_VERSION = "practice-1.1";
+const APP_VERSION = "practice-1.2";
 let sqlEditor = null;
 let sqlHintTables = {};
 let autoHintTimer = null;
@@ -20,6 +20,7 @@ const els = {
   dbSelect: document.getElementById("dbSelect"),
   dbSelectLabel: document.getElementById("dbSelectLabel"),
   diagram: document.getElementById("diagram"),
+  diagramCard: document.getElementById("diagramCard"),
   tableList: document.getElementById("tableList"),
   editor: document.getElementById("sqlEditor"),
   result: document.getElementById("result"),
@@ -82,6 +83,16 @@ ORDER BY id;`
       label: "tree を表示",
       sql: `SELECT *
 FROM tree
+ORDER BY id;`
+    }
+  ],
+
+  sandbox: [
+    {
+      id: "products",
+      label: "products を表示",
+      sql: `SELECT *
+FROM products
 ORDER BY id;`
     }
   ]
@@ -319,10 +330,13 @@ async function loadDatabase(databaseId, setDefaultSql = false) {
   renderExamples(item.id);
 
   if (item.diagram) {
+    if (els.diagramCard) els.diagramCard.hidden = false;
     els.diagram.src = `${item.diagram}?v=${encodeURIComponent(config.version || APP_VERSION)}`;
     els.diagram.hidden = false;
   } else {
+    els.diagram.removeAttribute("src");
     els.diagram.hidden = true;
+    if (els.diagramCard) els.diagramCard.hidden = true;
   }
 
   // 新しいDBを読み込んだときは、SQLエディタを空にする。
